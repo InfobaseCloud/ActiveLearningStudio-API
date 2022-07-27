@@ -141,6 +141,9 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('activities/{activity}/h5p-resource-settings-open', 'ActivityController@getH5pResourceSettingsOpen');
         Route::apiResource('playlists.activities', 'ActivityController');
 
+        Route::apiResource('h5p-record', 'H5pRecordsController');
+        Route::get('playlists/{playlistId}/h5p-record', 'H5pRecordsController@getRecordByPlaylistId');
+
         Route::apiResource('suborganizations/{suborganization}/activity-layouts', 'ActivityLayoutController');
         Route::post('get-whiteboard', 'WhiteboardController@getWhiteboard');
 
