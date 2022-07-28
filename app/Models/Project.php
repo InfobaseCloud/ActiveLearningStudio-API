@@ -36,7 +36,8 @@ class Project extends Model
         'status',
         'organization_id',
         'organization_visibility_type_id',
-        'team_id'
+        'team_id',
+        'project_type'
     ];
 
     /**
