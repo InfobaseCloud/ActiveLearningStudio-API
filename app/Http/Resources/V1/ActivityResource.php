@@ -33,6 +33,7 @@ class ActivityResource extends JsonResource
             'author_tags' => AuthorTagResource::collection($this->authorTags),
             'source_type' => $this->source_type,
             'source_url' => $this->source_url,
+            'duration' => $this->duration
         ];
 
         // Feature added after the fact for optimization
