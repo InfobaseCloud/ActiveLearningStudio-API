@@ -29,7 +29,8 @@ class ProjectUpdateRequest extends FormRequest
             'thumb_url' => 'required',
             'organization_visibility_type_id' => 'required|exists:organization_visibility_types,id',
             'user_id' => 'integer|exists:users,id',
-            'shared' => 'boolean'
+            'shared' => 'boolean',
+            'project_type' => 'nullable'
         ];
     }
 }
