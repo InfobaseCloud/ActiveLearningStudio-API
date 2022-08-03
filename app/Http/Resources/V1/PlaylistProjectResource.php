@@ -27,6 +27,7 @@ class PlaylistProjectResource extends JsonResource
             'updated_at' => $this->updated_at,
             'users' => ProjectUserResource::collection($this->users),
             'team' => $this->team,
+            "project_type" => $this->project_type
         ];
     }
 }
