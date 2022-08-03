@@ -260,9 +260,9 @@ class ProjectRepository extends BaseRepository implements ProjectRepositoryInter
             },
             'playlists.activities' => function ($query) {
                 $query->orderBy('order');
-            }])
+            },
+            'playlists.activities.authorTags'])
             ->first();
-
         $proj = [];
         $proj["id"] = $project['id'];
         $proj["name"] = $project['name'];
@@ -298,6 +298,7 @@ class ProjectRepository extends BaseRepository implements ProjectRepositoryInter
                 $plistActivity['library_name'] = $h5pContent ? $h5pContent->library_name : null;
                 $plistActivity['thumb_url'] = $activity->thumb_url;
                 $plistActivity['duration'] = $activity->duration;
+                $plistActivity['author_tags'] = $activity->authorTags;
                 $plist['activities'][] = $plistActivity;
             }
             $proj["playlists"][] = $plist;
