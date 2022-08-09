@@ -88,16 +88,16 @@ class PublishController extends Controller
                 'errors' => ['Invalid project or playlist Id.'],
             ], 400);
         }
-
         $authUser = auth()->user();
+
         if (Gate::forUser($authUser)->allows('publish-to-lms', $project)) {
             $data = $publishRequest->validated();
             $lmsSetting = $this->lmsSettingRepository->find($data['setting_id']);
             $counter = (isset($data['counter']) ? intval($data['counter']) : 0);
-
+            
             $moodle_playlist = new MoodlePlaylist($lmsSetting);
             $response = $moodle_playlist->send($playlist, ['counter' => intval($counter)]);
-
+            
             $code = $response->getStatusCode();
             if ($code == 200) {
                 $outcome = $response->getBody()->getContents();

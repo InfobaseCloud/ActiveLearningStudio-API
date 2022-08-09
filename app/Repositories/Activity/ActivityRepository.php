@@ -27,12 +27,14 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Subject;
 use App\Models\EducationLevel;
 use App\Models\AuthorTag;
+use App\Repositories\Tags\TagsRepositoryInterface;
 
 class ActivityRepository extends BaseRepository implements ActivityRepositoryInterface
 {
     private $h5pElasticsearchFieldRepository;
     private $subjectRepository;
     private $educationLevelRepository;
+    private $tagsRepository;
     private $client;
 
     /**
@@ -42,12 +44,14 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
      * @param H5pElasticsearchFieldRepositoryInterface $h5pElasticsearchFieldRepository
      * @param SubjectRepositoryInterface $subjectRepository
      * @param EducationLevelRepositoryInterface $educationLevelRepository
+     * @param TagsRepositoryInterface $tagsRepository
      */
     public function __construct(
         Activity $model,
         H5pElasticsearchFieldRepositoryInterface $h5pElasticsearchFieldRepository,
         SubjectRepositoryInterface $subjectRepository,
-        EducationLevelRepositoryInterface $educationLevelRepository
+        EducationLevelRepositoryInterface $educationLevelRepository,
+        TagsRepositoryInterface $tagsRepository
     )
     {
         parent::__construct($model);
@@ -55,6 +59,7 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
         $this->h5pElasticsearchFieldRepository = $h5pElasticsearchFieldRepository;
         $this->subjectRepository = $subjectRepository;
         $this->educationLevelRepository = $educationLevelRepository;
+        $this->tagsRepository = $tagsRepository;
     }
 
     /**
@@ -225,6 +230,7 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
             ->endDate(Arr::get($data, 'endDate', 0))
             ->indexing(Arr::get($data, 'indexing', []))
             ->subjectIds(Arr::get($data, 'subjectIds', []))
+            ->tagsIds(Arr::get($data, 'tagsIds', []))
             ->educationLevelIds(Arr::get($data, 'educationLevelIds', []))
             ->projectIds($projectIds)
             ->h5pLibraries(Arr::get($data, 'h5pLibraries', []))
@@ -352,6 +358,49 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
             $queryWhere[] = "subject_id IN (" . $dataSubjectIds . ")";
         }
 
+        if (isset($data['tagsIds']) && !empty($data['tagsIds'])) {
+            $tagsIdsWithMatchingName = $this->tagsRepository->getTagsIdsWithMatchingName($data['tagsIds']);
+            $result = [];
+            $activityResult = array();
+            $playlistResult = array();
+            $projectResult = array();
+            foreach ($tagsIdsWithMatchingName as $id) {
+                $query = 'SELECT * FROM activity_tags where activity_tag_id ='.$id;
+                $data = DB::select($query);
+                foreach($data as $res){
+                    array_push($result, $res);
+                }
+            }
+            foreach($result as $activityId){
+                {
+                    $query = 'SELECT * FROM activities where id ='.$activityId->activity_id;
+                    $data = DB::select($query);
+                    foreach($data as $res){
+                        array_push($activityResult, $res);
+                    }
+                }
+            }
+            
+            foreach($activityResult as $playlist){
+                $query = 'SELECT * FROM playlists where id ='.$playlist->playlist_id;
+                $data = DB::select($query);
+                foreach($data as $res){
+                    array_push($playlistResult, $res);
+                }
+            }
+            foreach($playlistResult as $project){
+                $query = 'SELECT * FROM projects where id ='.$project->project_id;
+                $data = DB::select($query);
+                foreach($data as $res){
+                    array_push($projectResult, $res);
+                }
+            }
+            $unique = array_unique(array_column($projectResult, 'id'));
+            $moreUniqueArray = array_values(array_intersect_key($projectResult, $unique));
+            $meta = ["project"=>count($moreUniqueArray), "total"=> count($moreUniqueArray)];
+            return response()->json(['data' => $moreUniqueArray, 'meta' => $meta]);
+        }
+
         if (isset($data['educationLevelIds']) && !empty($data['educationLevelIds'])) {
             $educationLevelIdsWithMatchingName = $this->educationLevelRepository->getEducationLevelIdsWithMatchingName($data['educationLevelIds']);
             $dataEducationLevelIds = implode(",", $educationLevelIdsWithMatchingName);
@@ -362,7 +411,7 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
             $dataAuthorTagsIds = implode(",", $data['authorTagsIds']);
             $queryWhere[] = "author_tag_id IN (" . $dataAuthorTagsIds . ")";
         }
-
+        
         if (isset($data['userIds']) && !empty($data['userIds'])) {
             $dataUserIds = implode("','", $data['userIds']);
             $queryWhere[] = "user_id IN (" . $dataUserIds . ")";
@@ -431,7 +480,6 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
         }
 
         $query = $query . "LIMIT " . $querySize . " OFFSET " . $queryFrom;
-
         $results = DB::select($query, $queryParams);
         $countResults = DB::select($countsQuery, $queryParams);
 
@@ -443,7 +491,6 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
         }
 
         $counts['total'] = array_sum($counts);
-
         return (SearchPostgreSqlResource::collection($results))->additional(['meta' => $counts]);
     }
 
@@ -743,6 +790,7 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
         $data['organizationIds'] = $request->has('org') ? [intval($request->input('org'))] : [];
         $data['subjectIds'] = $request->has('subjectIds') || $request->has('subject') ? $request->input('subjectIds') : [];
         $data['educationLevelIds'] = $request->has('educationLevelIds') || $request->has('level') ? $request->input('educationLevelIds') : [];
+        $data['tagsIds'] = $request->has('tagsIds') || $request->has('all_tags') ? $request->input('tagsIds') : [];
 
         if ($request->has('start')) {
             $data['startDate'] = $request->input('start', '');

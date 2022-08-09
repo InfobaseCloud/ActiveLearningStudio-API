@@ -71,6 +71,8 @@ use App\Repositories\OrganizationPermissionType\OrganizationPermissionTypeReposi
 use App\Repositories\OrganizationPermissionType\OrganizationPermissionTypeRepositoryInterface;
 use App\Repositories\Subject\SubjectRepository;
 use App\Repositories\Subject\SubjectRepositoryInterface;
+use App\Repositories\Tags\TagsRepository;
+use App\Repositories\Tags\TagsRepositoryInterface;
 
 class RepositoryServiceProvider extends ServiceProvider
 {
@@ -115,6 +117,7 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(EducationLevelRepositoryInterface::class, EducationLevelRepository::class);
         $this->app->bind(AuthorTagRepositoryInterface::class, AuthorTagRepository::class);
         $this->app->bind(ActivityLayoutRepositoryInterface::class, ActivityLayoutRepository::class);
+        $this->app->bind(TagsRepositoryInterface::class, TagsRepository::class);
     }
 
     /**

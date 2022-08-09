@@ -250,6 +250,8 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::apiResource('suborganizations/{suborganization}/education-levels', 'EducationLevelController');
         // author tags
         Route::apiResource('suborganizations/{suborganization}/author-tags', 'AuthorTagController');
+        // tags
+        Route::apiResource('suborganizations/{suborganization}/tags', 'TagsController');
         /*********************** ENDED NEW ADMIN PANEL ROUTES ************************/
 
         // Permissions

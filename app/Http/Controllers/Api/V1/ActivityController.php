@@ -33,6 +33,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Arr;
 use H5pCore;
 use App\Models\Organization;
+use App\Models\ActivityTag;
 
 /**
  * @group 5. Activity
@@ -166,12 +167,12 @@ class ActivityController extends Controller
         $data = $request->validated();
 
         $data['order'] = $this->activityRepository->getOrder($playlist->id) + 1;
-
+        
         return \DB::transaction(function () use ($data, $playlist) {
 
-            $attributes = Arr::except($data, ['subject_id', 'education_level_id', 'author_tag_id']);
+            $attributes = Arr::except($data, ['subject_id', 'education_level_id', 'author_tag_id', 'tag_id']);
             $activity = $playlist->activities()->create($attributes);
-
+            // dd($data['tag_id']);
             if ($activity) {
                 if (isset($data['subject_id']) && isset($data['subject_id'][0])) {
                     $activity->subjects()->attach($data['subject_id']);
@@ -182,10 +183,18 @@ class ActivityController extends Controller
                 if (isset($data['author_tag_id']) && isset($data['author_tag_id'][0])) {
                     $activity->authorTags()->attach($data['author_tag_id']);
                 }
-
+                
+                $activities_tag = [];
+                foreach($data['tag_id'] as $tag) {
+                    $at = ActivityTag::create([
+                        'activity_id' => $activity->id,
+                        'activity_tag_id' => $tag
+                    ]);
+                    $activities_tag[] = $at;
+                }
                 $updated_playlist = new PlaylistResource($this->playlistRepository->find($playlist->id));
                 event(new PlaylistUpdatedEvent($updated_playlist->project, $updated_playlist));
-
+                
                 return response([
                     'activity' => new ActivityResource($activity),
                 ], 201);

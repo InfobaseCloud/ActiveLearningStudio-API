@@ -36,7 +36,8 @@ class Activity extends Model
         'description',
         'source_type',
         'source_url',
-        'duration'
+        'duration',
+        'tag_id'
     ];
 
     /**

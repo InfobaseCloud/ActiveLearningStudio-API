@@ -19,7 +19,7 @@ class Playlist
         $this->lmsSetting = $lmsSetting;
         $this->client = new \GuzzleHttp\Client();
     }
-
+    
     public function send(PlaylistModel $playlist, $data)
     {        
         $organizationId = Project::where('id', $playlist->project_id)->value('organization_id');
@@ -33,8 +33,9 @@ class Playlist
         $web_service_token = $this->lmsSetting->lms_access_token;
         $lms_host = $this->lmsSetting->lms_url;
         $web_service_function = "local_curriki_moodle_plugin_create_playlist";
-
+        
         $web_service_url = $lms_host . "/webservice/rest/server.php";
+        
         $rquest_params = [
             "wstoken" => $web_service_token,
             "wsfunction" => $web_service_function, 
@@ -50,6 +51,7 @@ class Playlist
             "grade_name" => $grade_name,
             "subject_name" => $subject_name
         ];
+        // dd($rquest_params);
         $response = $this->client->request('GET', $web_service_url, ['query' => $rquest_params]);
         return $response;
     }
@@ -61,7 +63,6 @@ class Playlist
         $activity = Activity::where('playlist_id', $playlistId->id)->orderBy('order','asc')->limit(1)->first();
         
         $resource = new ActivityResource($activity);
-
         // Get First Subject Category
         if ($resource->$activityParam->isNotEmpty()) { 
             return $resource->$activityParam[0]->name;

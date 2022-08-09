@@ -170,11 +170,10 @@ class SearchController extends Controller
     public function dashboard(SearchRequest $searchRequest)
     {
         $data = $searchRequest->validated();
-
         $data['userIds'] = [auth()->user()->id];
-
+        
         $data['organizationIds'] = [$data['organization_id']];
-
+        
         $results = $this->activityRepository->advanceSearchForm($data, auth()->user()->id);
 
         return $results;
