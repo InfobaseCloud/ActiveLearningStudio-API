@@ -34,7 +34,7 @@ class DefaultTagsSeeder extends Seeder
                 ]
             ];
 
-            DB::table('all_tags')->insertOrIgnore($allTags);
+            DB::table('tags')->insertOrIgnore($allTags);
         }
     }
 }

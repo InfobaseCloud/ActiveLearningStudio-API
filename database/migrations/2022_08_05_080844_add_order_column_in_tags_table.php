@@ -13,7 +13,7 @@ class AddOrderColumnInTagsTable extends Migration
      */
     public function up()
     {
-        Schema::table('all_tags', function (Blueprint $table) {
+        Schema::table('tags', function (Blueprint $table) {
             $table->string('order')->nullable()->default(null);
         });
     }

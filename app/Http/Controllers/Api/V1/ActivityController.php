@@ -183,15 +183,18 @@ class ActivityController extends Controller
                 if (isset($data['author_tag_id']) && isset($data['author_tag_id'][0])) {
                     $activity->authorTags()->attach($data['author_tag_id']);
                 }
-                
-                $activities_tag = [];
-                foreach($data['tag_id'] as $tag) {
-                    $at = ActivityTag::create([
-                        'activity_id' => $activity->id,
-                        'activity_tag_id' => $tag
-                    ]);
-                    $activities_tag[] = $at;
+                if (isset($data['tag_id']) && isset($data['tag_id'][0])) {
+                    $activity->tags()->attach($data['tag_id']);
                 }
+                
+                // $activities_tag = [];
+                // foreach($data['tag_id'] as $tag) {
+                //     $at = ActivityTag::create([
+                //         'activity_id' => $activity->id,
+                //         'activity_tag_id' => $tag
+                //     ]);
+                //     $activities_tag[] = $at;
+                // }
                 $updated_playlist = new PlaylistResource($this->playlistRepository->find($playlist->id));
                 event(new PlaylistUpdatedEvent($updated_playlist->project, $updated_playlist));
                 
@@ -292,7 +295,7 @@ class ActivityController extends Controller
 
         return \DB::transaction(function () use ($validated, $playlist, $activity) {
 
-            $attributes = Arr::except($validated, ['data', 'subject_id', 'education_level_id', 'author_tag_id']);
+            $attributes = Arr::except($validated, ['data', 'subject_id', 'education_level_id', 'author_tag_id', 'tag_id']);
             $is_updated = $this->activityRepository->update($attributes, $activity->id);
 
             if ($is_updated) {
@@ -304,6 +307,9 @@ class ActivityController extends Controller
                 }
                 if (isset($validated['author_tag_id'])) {
                     $activity->authorTags()->sync($validated['author_tag_id']);
+                }
+                if (isset($validated['tag_id'])) {
+                    $activity->tags()->sync($validated['tag_id']);
                 }
 
                 // H5P meta is in 'data' index of the payload.

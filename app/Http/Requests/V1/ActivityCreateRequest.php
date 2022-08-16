@@ -41,7 +41,7 @@ class ActivityCreateRequest extends FormRequest
             'source_url' => 'nullable|string',
             'duration' => 'nullable|string',
             'tag_id' => 'array|nullable',
-            'tag_id.*' => 'nullable|integer|distinct|exists:all_tags,id,deleted_at,NULL',
+            'tag_id.*' => 'nullable|integer|distinct|exists:tags,id,deleted_at,NULL',
         ];
     }
 }

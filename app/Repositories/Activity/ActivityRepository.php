@@ -359,46 +359,51 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
         }
 
         if (isset($data['tagsIds']) && !empty($data['tagsIds'])) {
-            $tagsIdsWithMatchingName = $this->tagsRepository->getTagsIdsWithMatchingName($data['tagsIds']);
-            $result = [];
-            $activityResult = array();
-            $playlistResult = array();
-            $projectResult = array();
-            foreach ($tagsIdsWithMatchingName as $id) {
-                $query = 'SELECT * FROM activity_tags where activity_tag_id ='.$id;
-                $data = DB::select($query);
-                foreach($data as $res){
-                    array_push($result, $res);
-                }
-            }
-            foreach($result as $activityId){
-                {
-                    $query = 'SELECT * FROM activities where id ='.$activityId->activity_id;
-                    $data = DB::select($query);
-                    foreach($data as $res){
-                        array_push($activityResult, $res);
-                    }
-                }
-            }
+            // $tagsIdsWithMatchingName = $this->tagsRepository->getTagsIdsWithMatchingName($data['tagsIds']);
+            // $tagsIdsWithMatchingName = $data['tagsIds'];
+            $tagIds = implode(",", $data['tagsIds']);
+            $queryWhere[] = "tag_id IN (" . $tagIds . ")";
+            // $result = [];
+            // $activityResult = array();
+            // $playlistResult = array();
+            // $projectResult = array();
+            // // dd($tagsIdsWithMatchingName);
+            // foreach ($tagsIdsWithMatchingName as $id) {
+            //     $query = 'SELECT * FROM activity_tags where activity_tag_id ='.$id;
+            //     $data = DB::select($query);
+            //     foreach($data as $res){
+            //         array_push($result, $res);
+            //     }
+            //     // dd($result);
+            // }
+            // foreach($result as $activityId){
+            //     {
+            //         $query = 'SELECT * FROM activities where id ='.$activityId->activity_id;
+            //         $data = DB::select($query);
+            //         foreach($data as $res){
+            //             array_push($activityResult, $res);
+            //         }
+            //     }
+            // }
             
-            foreach($activityResult as $playlist){
-                $query = 'SELECT * FROM playlists where id ='.$playlist->playlist_id;
-                $data = DB::select($query);
-                foreach($data as $res){
-                    array_push($playlistResult, $res);
-                }
-            }
-            foreach($playlistResult as $project){
-                $query = 'SELECT * FROM projects where id ='.$project->project_id;
-                $data = DB::select($query);
-                foreach($data as $res){
-                    array_push($projectResult, $res);
-                }
-            }
-            $unique = array_unique(array_column($projectResult, 'id'));
-            $moreUniqueArray = array_values(array_intersect_key($projectResult, $unique));
-            $meta = ["project"=>count($moreUniqueArray), "total"=> count($moreUniqueArray)];
-            return response()->json(['data' => $moreUniqueArray, 'meta' => $meta]);
+            // foreach($activityResult as $playlist){
+            //     $query = 'SELECT * FROM playlists where id ='.$playlist->playlist_id;
+            //     $data = DB::select($query);
+            //     foreach($data as $res){
+            //         array_push($playlistResult, $res);
+            //     }
+            // }
+            // foreach($playlistResult as $project){
+            //     $query = 'SELECT * FROM projects where id ='.$project->project_id;
+            //     $data = DB::select($query);
+            //     foreach($data as $res){
+            //         array_push($projectResult, $res);
+            //     }
+            // }
+            // $unique = array_unique(array_column($projectResult, 'id'));
+            // $moreUniqueArray = array_values(array_intersect_key($projectResult, $unique));
+            // $meta = ["project"=>count($moreUniqueArray), "total"=> count($moreUniqueArray)];
+            // return response()->json(['data' => $moreUniqueArray, 'meta' => $meta]);
         }
 
         if (isset($data['educationLevelIds']) && !empty($data['educationLevelIds'])) {

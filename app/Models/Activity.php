@@ -86,6 +86,7 @@ class Activity extends Model
             $activity->subjects()->detach();
             $activity->educationLevels()->detach();
             $activity->authorTags()->detach();
+            $activity->tags()->detach();
         });
     }
 
@@ -188,5 +189,13 @@ class Activity extends Model
     public function authorTags()
     {
         return $this->belongsToMany('App\Models\AuthorTag', 'activity_author_tag')->withTimestamps();
+    }
+
+    /**
+     * Get the activity tags.
+     */
+    public function tags()
+    {
+        return $this->belongsToMany('App\Models\ActivityTag', 'activity_tags')->withTimestamps();
     }
 }
