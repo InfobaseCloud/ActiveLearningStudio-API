@@ -64,7 +64,6 @@ class ProjectController extends Controller
     public function index(Organization $suborganization)
     {
         $this->authorize('viewAny', [Project::class, $suborganization]);
-
         $authenticated_user = auth()->user();
 /*
         This returns all projects if the user is admin and breaks the frontend for that user given the number of projects
@@ -314,14 +313,23 @@ class ProjectController extends Controller
     public function store(ProjectRequest $projectRequest, Organization $suborganization)
     {
         $this->authorize('create', [Project::class, $suborganization]);
-
         $data = $projectRequest->validated();
         $authenticatedUser = auth()->user();
         $role = ['role' => 'owner'];
-
         $project = $this->projectRepository->createProject($authenticatedUser, $suborganization, $data, $role);
-
+       
         if ($project) {
+            if($data && $data["project_for"]){
+                $teacher_exists = in_array("teacher", $data["project_for"]);
+                $student_exists = in_array("student", $data["project_for"]);
+                if($teacher_exists){
+                    $authenticatedUser->teacherProjects()->attach($project->id, ['organization_id' => $suborganization->id]);
+                }
+                if($student_exists){
+                    $authenticatedUser->studentProjects()->attach($project->id, ['organization_id' => $suborganization->id]);
+                }
+            }
+
             return response([
                 'project' => new ProjectResource($project),
             ], 201);
@@ -348,7 +356,6 @@ class ProjectController extends Controller
     public function show(Organization $suborganization, Project $project)
     {
         $this->authorize('view', [Project::class, $project]);
-
         return response([
             'project' => new ProjectResource($project),
         ], 200);
@@ -497,24 +504,49 @@ class ProjectController extends Controller
     {
         $this->authorize('update', [Project::class, $project]);
         $data = $projectUpdateRequest->validated();
-
-        return \DB::transaction(function () use ($project, $data) {
+        $projectFor = $projectUpdateRequest->project_for;
+        $authenticatedUser = auth()->user();
+        return \DB::transaction(function () use ($project, $data,$projectFor,$authenticatedUser) {
 
             if (isset($data['user_id'])) {
                 $project->users()->sync([$data['user_id'] => ['role' => 'owner']]);
                 Arr::forget($data, ['user_id']);
             }
             $is_updated = $this->projectRepository->update($data, $project->id);
-
             if ($is_updated) {
                 $updated_project = new ProjectResource($this->projectRepository->find($project->id));
                 event(new ProjectUpdatedEvent($updated_project));
-
+                if($projectFor){
+                    $teacher_exists = in_array("teacher", $projectFor);
+                    $student_exists = in_array("student", $projectFor);
+                    if($teacher_exists){
+                        if ($authenticatedUser->teacherProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
+                            $authenticatedUser->teacherProjects()->wherePivot('organization_id', $updated_project->organization_id)->detach($updated_project->id);
+                        }
+                        $authenticatedUser->teacherProjects()->attach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
+                    }
+                    else{
+                        if ($authenticatedUser->teacherProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
+                            $authenticatedUser->teacherProjects()->wherePivot('organization_id', $updated_project->organization_id)->detach($updated_project->id);
+                        }
+                    }
+                    if($student_exists){
+                        if ($authenticatedUser->studentProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
+                            $authenticatedUser->studentProjects()->detach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
+                        }
+                        $authenticatedUser->studentProjects()->attach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
+                    }
+                    else{
+                        if ($authenticatedUser->studentProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
+                            $authenticatedUser->studentProjects()->detach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
+                        }
+                    }
+                }
                 return response([
                     'project' => $updated_project,
                 ], 200);
             }
-
+            
             return response([
                 'errors' => ['Failed to update project.'],
             ], 500);
@@ -747,6 +779,67 @@ class ProjectController extends Controller
         $authenticated_user = auth()->user();
 
         $favoriteProjects = $authenticated_user->favoriteProjects()
+                            ->wherePivot('organization_id', $suborganization->id)
+                            ->get();
+
+        return response([
+            'projects' => ProjectResource::collection($favoriteProjects),
+        ], 200);
+    }
+
+    public function getTeacherProject(Organization $suborganization)
+    {
+        $this->authorize('favorite', [Project::class, $suborganization]);
+
+        $authenticated_user = auth()->user();
+
+        $teachersProjects = $authenticated_user->teacherProjects()
+                            ->wherePivot('organization_id', $suborganization->id)
+                            ->get();
+
+        return response([
+            'projects' => ProjectResource::collection($teachersProjects),
+        ], 200);
+    }
+    public function getOneTeacherProject(Organization $suborganization, Project $project, Request $request)
+    {
+        $this->authorize('favorite', [Project::class, $suborganization, $project]);
+        $authenticated_user = auth()->user();
+
+        $teachersProjects = $authenticated_user->teacherProjects()
+                            ->wherePivot('project_id', $request ->projectId)
+                            ->wherePivot('organization_id', $suborganization->id)
+                            ->get();
+    
+        // dd($teachersProjects);
+        return response([
+            'projects' => ProjectResource::collection($teachersProjects),
+        ], 200);
+    }
+
+    public function getStudentProject(Organization $suborganization)
+    {
+        $this->authorize('favorite', [Project::class, $suborganization]);
+
+        $authenticated_user = auth()->user();
+
+        $favoriteProjects = $authenticated_user->studentProjects()
+                            ->wherePivot('organization_id', $suborganization->id)
+                            ->get();
+
+        return response([
+            'projects' => ProjectResource::collection($favoriteProjects),
+        ], 200);
+    }
+
+    public function getOneStudentProject(Organization $suborganization, Project $project, Request $request)
+    {
+        $this->authorize('favorite', [Project::class, $suborganization]);
+
+        $authenticated_user = auth()->user();
+
+        $favoriteProjects = $authenticated_user->studentProjects()
+                            ->wherePivot('project_id', $request ->projectId)
                             ->wherePivot('organization_id', $suborganization->id)
                             ->get();
 
