@@ -377,7 +377,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
     ], function () {
         // users
         Route::get('users/report/basic', 'UserController@reportBasic')->name('users.report.basic');
-        Route::post('users/bulk/import', 'UserController@bulkImport')->name('users.bulk.import');
+        Route::post('{orgId}/users/bulk/import', 'UserController@bulkImport')->name('users.bulk.import');
         Route::get('users/assign/starter-projects', 'UserController@assignStarterProjects')->name('users.assign.starter-projects');
         Route::get('users/{user}/roles/{role}', 'UserController@updateRole')->name('users.update.role');
         Route::apiResource('users', 'UserController');
