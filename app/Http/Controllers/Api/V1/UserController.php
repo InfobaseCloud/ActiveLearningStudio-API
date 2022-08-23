@@ -2,34 +2,35 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\User;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
+use App\Models\Organization;
+use Illuminate\Http\Request;
+use App\Rules\StrongPassword;
+use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 use App\Http\Controllers\Controller;
+use App\Models\OrganizationRoleType;
+use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\V1\UserResource;
+use App\Http\Requests\V1\UserCheckRequest;
+use App\Notifications\NewUserNotification;
+use App\Http\Requests\V1\UserSearchRequest;
+use App\Http\Resources\V1\UserStatsResource;
 use App\Http\Requests\V1\ProfileUpdateRequest;
 use App\Http\Requests\V1\SharedProjectRequest;
-use App\Http\Requests\V1\SuborganizationAddNewUser;
-use App\Http\Requests\V1\SuborganizationUpdateUserDetail;
-use App\Http\Requests\V1\UserCheckRequest;
-use App\Http\Requests\V1\CheckUserEmailRequest;
-use App\Http\Requests\V1\UserSearchRequest;
-use App\Http\Resources\V1\Admin\ProjectResource;
 use App\Http\Resources\V1\UserForTeamResource;
-use App\Http\Resources\V1\UserResource;
+use App\Http\Requests\V1\CheckUserEmailRequest;
 use App\Http\Resources\V1\OrganizationResource;
+use App\Http\Resources\V1\Admin\ProjectResource;
 use App\Repositories\User\UserRepositoryInterface;
-use App\Rules\StrongPassword;
-use App\User;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Hash;
+use App\Http\Requests\V1\SuborganizationAddNewUser;
 use App\Http\Resources\V1\ExportedProjectsResource;
+use App\Http\Requests\V1\SuborganizationUpdateUserDetail;
 use App\Http\Resources\V1\ExportedIndependentActivitiesResource;
-use App\Http\Resources\V1\UserStatsResource;
-use App\Models\Organization;
-use App\Notifications\NewUserNotification;
 use App\Repositories\Organization\OrganizationRepositoryInterface;
-use Illuminate\Support\Arr;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 /**
  * @group 2. User
@@ -247,7 +248,7 @@ class UserController extends Controller
                 $user = $userObject;
                                                 
             } else {
-                $user = $this->userRepository->create(Arr::except($data, ['role_id']));
+                $user = $this->userRepository->create($data);
             }
 
             if (!$suborganization->users()->where('user_id', $user->id)->exists()) {
@@ -288,6 +289,9 @@ class UserController extends Controller
             if (isset($data['password']) && $data['password'] !== '') {
                 $data['password'] = Hash::make($data['password']);
             }
+            $roles = new OrganizationRoleType();
+            $roleName = $roles->getRoleNameById($data['role_id'])->first();
+            $data['role'] = $roleName;
             $user = $this->userRepository->update(Arr::except($data, ['user_id', 'role_id']), $data['user_id']);
             $suborganization->users()->updateExistingPivot($data['user_id'], ['organization_role_type_id' => $data['role_id']]);
 
