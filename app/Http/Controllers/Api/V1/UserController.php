@@ -247,7 +247,7 @@ class UserController extends Controller
                 $user = $userObject;
                                                 
             } else {
-                $user = $this->userRepository->create(Arr::except($data, ['role_id']));
+                $user = $this->userRepository->create($data);
             }
 
             if (!$suborganization->users()->where('user_id', $user->id)->exists()) {

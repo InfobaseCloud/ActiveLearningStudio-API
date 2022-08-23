@@ -2,16 +2,18 @@
 
 namespace App\Repositories\User;
 
-use App\Http\Resources\V1\NotificationListResource;
-use App\Repositories\BaseRepository;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
-use Laravel\Passport\Passport;
 use Lcobucci\JWT\Parser;
+use Illuminate\Support\Arr;
+use Laravel\Passport\Passport;
+use Illuminate\Support\Facades\Log;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
+use App\Models\OrganizationRoleType;
+use App\Repositories\BaseRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Http\Resources\V1\NotificationListResource;
 
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
@@ -34,8 +36,11 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function create(array $data)
     {
         try {
+            $roles = new OrganizationRoleType();
             $data['deleted_at'] = null;
-            return $this->model->withTrashed()->updateOrCreate(['email' => $data['email']], $data);
+            $roleName = $roles->getRoleNameById($data['role_id'])->first();
+            $data['role'] = $roleName;
+            return $this->model->withTrashed()->updateOrCreate(['email' => $data['email']], Arr::except($data, ['role_id']));
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
