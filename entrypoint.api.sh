@@ -6,6 +6,9 @@ if [[ ! -e /var/www/html/storage/oauth-private.key || ! -e /var/www/html/storage
 
 php /var/www/html/artisan migrate --force
 
+sh /var/www/newrelic-php5-10.0.0.312-linux/newrelic-install install
+
+h5p_branch=$(printenv H5P_BRANCH);
 git clone -b master https://github.com/InfobaseCloud/H5P.Distribution.git /tmp/h5p-dist
 
 cp -rf /tmp/h5p-dist/* /var/www/html/storage/app/public/h5p/
@@ -13,4 +16,3 @@ chmod 777 -R /var/www/html/storage &
 touch /var/www/html/health.ok
 
 apache2ctl -D FOREGROUND
-

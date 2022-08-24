@@ -172,10 +172,14 @@ class UserRepository extends BaseRepository
         try {
             $import = new UsersImport();
             $import->import($data['import_file']);
-
+            if (!$import->roleTypeId) {
+                return [
+                    'report' => true,
+                    'message' => 'Role not found! Please check the role in the CSV.'
+                ];
+            }
             // if none of the records was inserted, could be empty file or bad formatted
             throw_if(!$import->importedCount && !$import->failures()->count(), new GeneralException('Empty or bad formatted file.'));
-
             $error = $this->bulkError($import);
 
             return [
