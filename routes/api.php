@@ -50,8 +50,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('subscribe', 'UserController@subscribe');
         Route::get('users/me', 'UserController@me');
         Route::get('users/notifications', 'UserController@listNotifications');
-        Route::get('suborganization/{suborganization}/users/notifications/export-list', 'UserController@exportProjectList');
-        Route::get('suborganization/{suborganization}/users/notifications/export-list-independent-activities', 'UserController@exportIndependentActivitiesList');
+        Route::get('users/notifications/export-list', 'UserController@exportProjectList');
         Route::get('users/notifications/read-all', 'UserController@readAllNotification');
         Route::post('users/notifications/{notification}/read', 'UserController@readNotification');
         Route::post('users/notifications/{notification}/delete', 'UserController@deleteNotification');
@@ -93,21 +92,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('suborganization/{suborganization}/get-groups', 'GroupController@getOrgGroups');
         Route::apiResource('suborganization.groups', 'GroupController');
 
-        //Independent Activity Layouts
-        Route::apiResource('suborganization.independent-activities', 'IndependentActivityController');
-        Route::post('independent-activities/upload-thumb', 'IndependentActivityController@uploadThumb');
-        Route::get('independent-activities/{independent_activity}/detail', 'IndependentActivityController@detail');
-        Route::get('independent-activities/{independent_activity}/h5p', 'IndependentActivityController@h5p');
-        Route::get('independent-activities/{independent_activity}/h5p-resource-settings', 'IndependentActivityController@getH5pResourceSettings');
-        Route::get('independent-activities/{independent_activity}/share', 'IndependentActivityController@share');
-        Route::get('independent-activities/{independent_activity}/remove-share', 'IndependentActivityController@removeShare');
-        Route::get('suborganization/{suborganization}/independent-activities/{independent_activity}/search-preview', 'IndependentActivityController@searchPreview');
-        Route::post('suborganization/{suborganization}/independent-activities/{independent_activity}/clone', 'IndependentActivityController@clone');
-        Route::post('suborganization/{suborganization}/independent-activities/{independent_activity}/export', 'IndependentActivityController@exportIndependentActivity');
-        Route::post('suborganization/{suborganization}/independent-activities/import', 'IndependentActivityController@importIndependentActivity');
-        Route::post('suborganization/{suborganization}/independent-activities/{independent_activity}/playlist/{playlist}/copy-to-playlist', 'IndependentActivityController@copyIndependentActivityIntoPlaylist');
-        
-        Route::get('independent-activities/{id}/h5p-activity', 'IndependentActivityController@h5pActivity');
         //Projects
         Route::get('suborganization/{suborganization}/projects/{project}/search-preview', 'ProjectController@searchPreview');
 
@@ -125,7 +109,10 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('suborganization/{suborganization}/teams/{team}/projects/{project}/export-projects-to-noovo', 'TeamController@exportProjecttoNoovo');
         Route::post('suborganization/{suborganization}/projects/{project}/export-noovo', 'ProjectController@exportNoovoProject');
         Route::post('suborganization/{suborganization}/projects/import', 'ProjectController@importProject');
-
+        Route::get('suborganization/{suborganization}/projects/teachers', 'ProjectController@getTeacherProject');
+        Route::get('suborganization/{suborganization}/projects/teachers/{projectId}', 'ProjectController@getOneTeacherProject');
+        Route::get('suborganization/{suborganization}/projects/students', 'ProjectController@getStudentProject');
+        Route::get('suborganization/{suborganization}/projects/students/{projectId}', 'ProjectController@getOneStudentProject');
 
         Route::post('suborganization/{suborganization}/projects/{project}/remove-share', 'ProjectController@removeShare');
         Route::post('suborganization/{suborganization}/projects/{project}/favorite', 'ProjectController@favorite');
@@ -156,9 +143,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('activities/{activity}/h5p-resource-settings', 'ActivityController@getH5pResourceSettings');
         Route::get('activities/{activity}/h5p-resource-settings-open', 'ActivityController@getH5pResourceSettingsOpen');
         Route::apiResource('playlists.activities', 'ActivityController');
-
-        Route::apiResource('h5p-record', 'H5pRecordsController');
-        Route::get('playlists/{playlistId}/h5p-record', 'H5pRecordsController@getRecordByPlaylistId');
 
         Route::apiResource('suborganizations/{suborganization}/activity-layouts', 'ActivityLayoutController');
         Route::post('get-whiteboard', 'WhiteboardController@getWhiteboard');
@@ -198,11 +182,10 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
             Route::any('ajax/reader/getScore', 'MobileAppAjaxController@getScores')->name('h5p.ajax.reader-getScore');
         });
 
-        // Search
+        // Elasticsearch
         Route::get('search', 'SearchController@search');
         Route::get('search/advanced', 'SearchController@advance');
         Route::get('search/dashboard', 'SearchController@dashboard');
-        Route::get('search/independent-activities', 'SearchController@independentActivities');
 
         // Suborganizations
         Route::get('suborganizations/{suborganization}/user-has-permission', 'SuborganizationController@userHasPermission')->name('suborganizations.user-has-permission');
@@ -236,18 +219,12 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('suborganizations/{suborganization}/projects', 'ProjectController@getOrgProjects')->name('suborganizations.get-projects');
         Route::get('projects/{project}/indexes/{index}', 'ProjectController@updateIndex');
         Route::post('projects/starter/{flag}', 'ProjectController@toggleStarter');
-
-        // independent-activities
-        Route::get('suborganizations/{suborganization}/independent-activities', 'IndependentActivityController@getOrgIndependentActivities')->name('suborganizations.get-independent-activities');
-        Route::get('independent-activities/{independent_activity}/indexes/{index}', 'IndependentActivityController@updateIndex');
-
         // lms-settings
         Route::apiResource('suborganizations/{suborganization}/lms-settings', 'LmsSettingsController');
         Route::get('users/report/basic', 'UserController@reportBasic')->name('users.report.basic');
         // lti-tool-settings
         Route::apiResource('suborganizations/{suborganization}/lti-tool-settings', 'LtiTool\LtiToolSettingsController');
         Route::post('suborganizations/{suborganization}/lti-tool-settings/{ltiToolSetting}/clone', 'LtiTool\LtiToolSettingsController@clone');
-        Route::get('suborganizations/{suborganization}/lti-tool-type', 'LtiTool\LtiToolSettingsController@getLTIToolTypeList');
 
         // brightcove-api-settings
         Route::apiResource('suborganizations/{suborganization}/brightcove-api-settings', 'Integration\BrightcoveAPISettingsController');
@@ -316,8 +293,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
                 'GoogleClassroomController@publishPlaylistToGoogleClassroom');
             Route::post('projects/{project}/playlists/{playlist}/activities/{activity}/publish',
                 'GoogleClassroomController@publishActivityToGoogleClassroom');
-            Route::post('activities/{independent_activity}/publish',
-                'GoogleClassroomController@publishIndependentActivityToGoogleClassroom');
         });
 
         Route::get('user-lms-settings', 'UserLmsSettingsController@index');
@@ -326,15 +301,12 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('organizations/search', 'OrganizationController@searchOrganizationByName')->name('organizations.search');
     });
     Route::get('go/getxapifile/{activity}', 'CurrikiGo\LmsServicesController@getXAPIFile');
-    Route::get('go/independent_activity/getxapifile/{independent_activity}', 'IndependentActivityController@getXAPIFileForIndepActivity');
     // public route for get user's shared projects
     Route::post('projects/shared', 'UserController@sharedProjects');
     
     Route::get('activities/{activity}/h5p-resource-settings-shared', 'ActivityController@getH5pResourceSettingsShared');
-    Route::get('independent-activities/{independent_activity}/h5p-resource-settings-shared', 'IndependentActivityController@getH5pResourceSettingsShared');
     // H5P Activity public route
     Route::get('h5p/activity/{activity}/visibility/{visibility}', 'H5pController@showByActivity');
-    Route::get('h5p/independent-activity/{independent_activity}/visibility/{visibility}', 'H5pController@showByIndependentActivity');
     // Route to support H5P Editor's core js library file upload with 'new XMLHttpRequest()'
     Route::any('h5p/ajax/files', '\Djoudi\LaravelH5p\Http\Controllers\AjaxController@files')->name('h5p.ajax.files');
     // H5P export public route for H5P toolbar and cloning
@@ -377,7 +349,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
     ], function () {
         // users
         Route::get('users/report/basic', 'UserController@reportBasic')->name('users.report.basic');
-        Route::post('{orgId}/users/bulk/import', 'UserController@bulkImport')->name('users.bulk.import');
+        Route::post('users/bulk/import', 'UserController@bulkImport')->name('users.bulk.import');
         Route::get('users/assign/starter-projects', 'UserController@assignStarterProjects')->name('users.assign.starter-projects');
         Route::get('users/{user}/roles/{role}', 'UserController@updateRole')->name('users.update.role');
         Route::apiResource('users', 'UserController');
