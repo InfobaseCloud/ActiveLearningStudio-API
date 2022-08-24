@@ -125,7 +125,11 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('suborganization/{suborganization}/teams/{team}/projects/{project}/export-projects-to-noovo', 'TeamController@exportProjecttoNoovo');
         Route::post('suborganization/{suborganization}/projects/{project}/export-noovo', 'ProjectController@exportNoovoProject');
         Route::post('suborganization/{suborganization}/projects/import', 'ProjectController@importProject');
-
+        Route::post('suborganization/{suborganization}/projects/import', 'ProjectController@importProject');
+        Route::get('suborganization/{suborganization}/projects/teachers', 'ProjectController@getTeacherProject');
+        Route::get('suborganization/{suborganization}/projects/teachers/{projectId}', 'ProjectController@getOneTeacherProject');
+        Route::get('suborganization/{suborganization}/projects/students', 'ProjectController@getStudentProject');
+        Route::get('suborganization/{suborganization}/projects/students/{projectId}', 'ProjectController@getOneStudentProject');
 
         Route::post('suborganization/{suborganization}/projects/{project}/remove-share', 'ProjectController@removeShare');
         Route::post('suborganization/{suborganization}/projects/{project}/favorite', 'ProjectController@favorite');
