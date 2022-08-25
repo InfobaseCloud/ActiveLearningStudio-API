@@ -40,7 +40,8 @@ class UsersImport implements WithBatchInserts, WithChunkReading, WithValidation,
      * @var int
      */
     public $importedCount = 0;
-
+    public $roleTypeId = 0;
+    public $roleType = 0;
     /**
      * UsersImport constructor.
      */
@@ -79,25 +80,27 @@ class UsersImport implements WithBatchInserts, WithChunkReading, WithValidation,
         $rowIndex = $row->getIndex();
         $row      = $row->toArray();
         $orgRole = ['display_name' => $row['role'], 'organization_id' => $orgId];
-        $roleTypeId = OrganizationRoleType::where($orgRole)->first()->id;
-        
-        $user = User::firstOrCreate([
-            'first_name' => $row['first_name'],
-            'last_name' => $row['last_name'],
-            'organization_name' => $row['organization_name'] ?? null,
-            'organization_type' => $row['organization_type'] ?? null,
-            'job_title' => $row['job_title'] ?? null,
-            'email' => $row['email'],
-            'role' => $row['role'] ?? 'Course Creator',
-            'password' => Hash::make($row['password']),
-            'remember_token' => Str::random(64),
-            'email_verified_at' => $this->timestamp
-        ]);
-    
-        $user->publisherOrg()->create([
-            'organization_id' => $orgId,
-            'organization_role_type_id' => $roleTypeId
-        ]);
+        $this->roleType = OrganizationRoleType::where($orgRole)->first();
+        $this->roleTypeId = $this->roleType != null ? $this->roleType->id : 0;
+
+        if ($this->roleTypeId != 0) {
+            $user = User::firstOrCreate([
+                'first_name' => $row['first_name'],
+                'last_name' => $row['last_name'],
+                'organization_name' => $row['organization_name'] ?? null,
+                'organization_type' => $row['organization_type'] ?? null,
+                'job_title' => $row['job_title'] ?? null,
+                'email' => $row['email'],
+                'password' => Hash::make($row['password']),
+                'remember_token' => Str::random(64),
+                'email_verified_at' => $this->timestamp
+            ]);
+
+            $user->publisherOrg()->create([
+                'organization_id' => $orgId,
+                'organization_role_type_id' => $this->roleTypeId
+            ]);
+        }
     }
 
     /**
