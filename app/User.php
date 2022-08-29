@@ -280,6 +280,22 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->belongsToMany('App\Models\Project', 'user_favorite_project')->withTimestamps();
     }
 
+     /**
+     * Get the teacher projects for the user
+     */
+    public function teacherProjects()
+    {
+        return $this->belongsToMany('App\Models\Project', 'user_teacher_project')->withTimestamps();
+    }
+
+    /**
+     * Get the student projects for the user
+     */
+    public function studentProjects()
+    {
+        return $this->belongsToMany('App\Models\Project', 'user_student_project')->withTimestamps();
+    }
+
     /**
      * Check if user has the specified permission in the provided organization
      *
@@ -304,5 +320,13 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         $userRepository = resolve(UserRepositoryInterface::class);
         return $userRepository->hasTeamPermissionTo($this, $permission, $team);
+    }
+
+    /**
+     * Get the independent activities for the user.
+     */
+    public function independentActivities()
+    {
+        return $this->hasMany('App\Models\IndependentActivity');
     }
 }

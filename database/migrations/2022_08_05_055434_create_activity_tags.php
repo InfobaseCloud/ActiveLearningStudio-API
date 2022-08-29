@@ -17,9 +17,9 @@ class CreateActivityTags extends Migration
             $table->id();
             $table->unsignedBigInteger('activity_id');
             $table->foreign('activity_id')->references('id')->on('activities');
-            $table->unsignedBigInteger('activity_tag_id');
-            $table->foreign('activity_tag_id')->references('id')->on('tags');
-            $table->unique(['activity_id', 'activity_tag_id']);
+            $table->unsignedBigInteger('tags_id');
+            $table->foreign('tags_id')->references('id')->on('tags');
+            $table->unique(['activity_id', 'tags_id']);
             $table->timestamps();
             $table->softDeletes();
         });

@@ -595,6 +595,9 @@ class ActivityRepository extends BaseRepository implements ActivityRepositoryInt
         if ($cloned_activity && count($activity->authorTags) > 0) {
             $cloned_activity->authorTags()->attach($activity->authorTags);
         }
+        if ($cloned_activity && count($activity->authorTags) > 0) {
+            $cloned_activity->tags()->attach($activity->authorTags);
+        }
 
         return $cloned_activity['id'];
     }

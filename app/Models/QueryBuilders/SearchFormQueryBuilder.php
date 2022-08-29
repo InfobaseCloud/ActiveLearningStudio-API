@@ -52,6 +52,11 @@ final class SearchFormQueryBuilder implements QueryBuilderInterface
      */
     private $subjectIds;
 
+        /**
+     * @var array
+     */
+    private $tagIds;
+
     /**
      * @var array
      */
@@ -133,6 +138,12 @@ final class SearchFormQueryBuilder implements QueryBuilderInterface
     public function subjectIds(array $subjectIds): self
     {
         $this->subjectIds = $subjectIds;
+        return $this;
+    }
+
+    public function tagIds(array $tagIds): self
+    {
+        $this->tagIds = $tagIds;
         return $this;
     }
 
@@ -321,6 +332,14 @@ final class SearchFormQueryBuilder implements QueryBuilderInterface
             $queries[] = [
                 'terms' => [
                     'subject_id' => $this->subjectIds
+                ]
+            ];
+        }
+
+        if (!empty($this->tagIds)) {
+            $queries[] = [
+                'terms' => [
+                    'tag_id' => $this->tagIds
                 ]
             ];
         }

@@ -196,6 +196,6 @@ class Activity extends Model
      */
     public function tags()
     {
-        return $this->belongsToMany('App\Models\ActivityTag', 'activity_tags')->withTimestamps();
+        return $this->belongsToMany('App\Models\Tags', 'activity_tags')->withTimestamps();
     }
 }

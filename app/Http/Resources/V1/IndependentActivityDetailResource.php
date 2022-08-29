@@ -2,11 +2,10 @@
 
 namespace App\Http\Resources\V1;
 
-use App\Http\Resources\V1\ActivityPlaylistResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ActivityDetailResource extends JsonResource
+class IndependentActivityDetailResource extends JsonResource
 {
 
     public function __construct($resource, $data)
@@ -28,7 +27,6 @@ class ActivityDetailResource extends JsonResource
     {
         $response = [
             'id' => $this->id,
-            'playlist' => new ActivityPlaylistResource($this->playlist),
             'title' => $this->title,
             'type' => $this->type,
             'content' => $this->content,
@@ -39,7 +37,6 @@ class ActivityDetailResource extends JsonResource
             'subjects' => SubjectResource::collection($this->subjects),
             'education_levels' => EducationLevelResource::collection($this->educationLevels),
             'author_tags' => AuthorTagResource::collection($this->authorTags),
-            'tags' => TagResource::collection($this->tags),
             'h5p' => $this->data['h5p_parameters'],
             'h5p_content' => $this->h5p_content,
             'library_name' => $this->h5p_content->library->name,

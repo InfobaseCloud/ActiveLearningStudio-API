@@ -2,16 +2,18 @@
 
 namespace App\Repositories\User;
 
-use App\Http\Resources\V1\NotificationListResource;
-use App\Repositories\BaseRepository;
 use App\User;
 use Carbon\Carbon;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
-use Laravel\Passport\Passport;
 use Lcobucci\JWT\Parser;
+use Illuminate\Support\Arr;
+use Laravel\Passport\Passport;
+use Illuminate\Support\Facades\Log;
 use Lcobucci\JWT\Signer\Rsa\Sha256;
+use App\Models\OrganizationRoleType;
+use App\Repositories\BaseRepository;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use App\Http\Resources\V1\NotificationListResource;
 
 class UserRepository extends BaseRepository implements UserRepositoryInterface
 {
@@ -34,8 +36,11 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function create(array $data)
     {
         try {
+            $roles = new OrganizationRoleType();
             $data['deleted_at'] = null;
-            return $this->model->withTrashed()->updateOrCreate(['email' => $data['email']], $data);
+            $roleName = $roles->getRoleNameById($data['role_id'])->first();
+            $data['role'] = $roleName;
+            return $this->model->withTrashed()->updateOrCreate(['email' => $data['email']], Arr::except($data, ['role_id']));
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }
@@ -204,6 +209,38 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
         }
         
         $query =  $query->where('type', 'App\Notifications\ProjectExportNotification');
+        $query =  $query->where('created_at', '>=', $date);
+
+        if (isset($data['order_by_column']) && $data['order_by_column'] !== '') {
+            $orderByType = isset($data['order_by_type']) ? $data['order_by_type'] : 'ASC';
+            $query = $query->orderBy($data['order_by_column'], $orderByType);
+        }
+        
+        return  $query->paginate($perPage)->withQueryString();
+    }
+
+    /**
+     * To get exported project list of last 10 days
+     * @param $data
+     * @return mixed
+     */
+    public function getUsersExportIndependentActivitiesList($data)
+    {
+        $days_limit = isset($data['days_limit']) ? $data['days_limit'] : config('constants.default-exported-independent-activities-days-limit');
+        
+        $date = Carbon::now()->subDays($days_limit);
+
+        $perPage = isset($data['size']) ? $data['size'] : config('constants.default-pagination-per-page');
+        $query = auth()->user()->notifications();
+        $q = $data['query'] ?? null;
+        // if simple request for getting project listing with search
+        if ($q) {
+            $query = $query->where(function($qry) use ($q) {
+                $qry->where('data', 'iLIKE', '%' .$q. '%');
+            });
+        }
+        
+        $query =  $query->where('type', 'App\Notifications\ActivityExportNotification');
         $query =  $query->where('created_at', '>=', $date);
 
         if (isset($data['order_by_column']) && $data['order_by_column'] !== '') {

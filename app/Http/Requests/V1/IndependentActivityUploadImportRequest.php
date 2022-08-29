@@ -4,7 +4,7 @@ namespace App\Http\Requests\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class ProjectRequest extends FormRequest
+class IndependentActivityUploadImportRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -23,14 +23,9 @@ class ProjectRequest extends FormRequest
      */
     public function rules()
     {
+       
         return [
-            'name' => 'required|string|max:80',
-            'description' => 'required|string|max:1000',
-            'thumb_url' => 'required',
-            'organization_visibility_type_id' => 'required|exists:organization_visibility_types,id',
-            'team_id' => 'nullable|exists:teams,id',
-            'project_type' => 'nullable',
-            'project_for' => 'array'
+            'independent_activity' => 'required|mimes:zip',
         ];
     }
 }

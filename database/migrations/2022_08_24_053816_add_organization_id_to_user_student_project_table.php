@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTags extends Migration
+class AddOrganizationIdToUserStudentProjectTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,8 @@ class CreateTags extends Migration
      */
     public function up()
     {
-        Schema::create('all_tags', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->timestamps();
-            $table->softDeletes();
-            $table->unsignedBigInteger('organization_id')->nullable();
+        Schema::table('user_student_project', function (Blueprint $table) {
+            $table->unsignedBigInteger('organization_id')->nullable()->default(1);
             $table->foreign('organization_id')->references('id')->on('organizations');
         });
     }
@@ -30,6 +26,8 @@ class CreateTags extends Migration
      */
     public function down()
     {
-        
+        Schema::table('user_student_project', function (Blueprint $table) {
+            //
+        });
     }
 }

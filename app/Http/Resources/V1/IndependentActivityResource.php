@@ -5,7 +5,7 @@ namespace App\Http\Resources\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ActivityResource extends JsonResource
+class IndependentActivityResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,7 +17,6 @@ class ActivityResource extends JsonResource
     {
         $data = [
             'id' => $this->id,
-            'playlist_id' => $this->playlist_id,
             'title' => $this->title,
             'type' => $this->type,
             'content' => $this->content,
@@ -27,14 +26,17 @@ class ActivityResource extends JsonResource
             'thumb_url' => $this->thumb_url,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'gcr_activity_visibility' => $this->playlist->project->organization->gcr_activity_visibility,
+            'gcr_activity_visibility' => $this->organization->gcr_activity_visibility,
             'subjects' => SubjectResource::collection($this->subjects),
             'education_levels' => EducationLevelResource::collection($this->educationLevels),
             'author_tags' => AuthorTagResource::collection($this->authorTags),
-            'tags' => TagResource::collection($this->tags),
             'source_type' => $this->source_type,
             'source_url' => $this->source_url,
-            'duration' => $this->duration
+            'organization_visibility_type_id' => $this->organization_visibility_type_id,
+            'status' => $this->status,
+            'status_text' => $this->status_text,
+            'indexing' => $this->indexing,
+            'indexing_text' => $this->indexing_text,
         ];
 
         // Feature added after the fact for optimization
