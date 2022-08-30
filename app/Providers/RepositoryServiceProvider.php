@@ -119,7 +119,6 @@ class RepositoryServiceProvider extends ServiceProvider
         $this->app->bind(EducationLevelRepositoryInterface::class, EducationLevelRepository::class);
         $this->app->bind(AuthorTagRepositoryInterface::class, AuthorTagRepository::class);
         $this->app->bind(ActivityLayoutRepositoryInterface::class, ActivityLayoutRepository::class);
-        $this->app->bind(TagsRepositoryInterface::class, TagsRepository::class);
         $this->app->bind(IndependentActivityRepositoryInterface::class, IndependentActivityRepository::class);
     }
 

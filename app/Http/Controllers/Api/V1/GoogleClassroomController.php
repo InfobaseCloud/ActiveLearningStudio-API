@@ -559,7 +559,7 @@ class GoogleClassroomController extends Controller
 
     /**
      * To Publish playlist To Google Classroom
-     * 
+     *
      * @urlParam project required The Id of a project. Example: 9
      * @urlParam playlist required The Id of a playlist. Example: 10
      * @bodyParam access_token string|null The stringified of the GAPI access token JSON object
@@ -570,7 +570,7 @@ class GoogleClassroomController extends Controller
      * @param GCPublishPlaylistRequest $publishPlaylistRequest
      * @param GcClassworkRepositoryInterface $gcClassworkRepository
      * @param GoogleClassroomRepositoryInterface $googleClassroomRepository
-     * 
+     *
      * @responseFile responses/google-classroom/google-classroom-publish-playlist.json
      *
      * @response  403 {
@@ -622,7 +622,7 @@ class GoogleClassroomController extends Controller
 
     /**
      * To Publish activity To Google Classroom under a specific topic
-     * 
+     *
      * @urlParam project required The Id of a project. Example: 9
      * @urlParam playlist required The Id of a playlist. Example: 10
      * @urlParam activity required The Id of a activity. Example: 11
@@ -635,7 +635,7 @@ class GoogleClassroomController extends Controller
      * @param GCPublishActivityRequest $publishActivityRequest
      * @param GcClassworkRepositoryInterface $gcClassworkRepository
      * @param GoogleClassroomRepositoryInterface $googleClassroomRepository
-     * 
+     *
      * @responseFile responses/google-classroom/google-classroom-publish-activity.json
      *
      * @response  403 {

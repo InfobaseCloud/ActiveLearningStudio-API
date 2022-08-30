@@ -885,4 +885,8 @@ class GoogleClassroom implements GoogleClassroomInterface
         return $return;
     }
 
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> origin/curriki-rel

@@ -6,14 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\IndependentActivityCreateRequest;
 use App\Http\Requests\V1\IndependentActivityEditRequest;
 use App\Http\Requests\V1\OrganizationIndependentActivityRequest;
+use App\Http\Requests\V1\MoveIndependentActivityIntoPlaylistRequest;
 use App\Http\Resources\V1\IndependentActivityResource;
 use App\Http\Resources\V1\IndependentActivityDetailResource;
 use App\Http\Resources\V1\H5pIndependentActivityResource;
 use App\Jobs\CloneIndependentActivity;
 use App\Jobs\CopyIndependentActivityIntoPlaylist;
+use App\Jobs\MoveIndependentActivityIntoPlaylist;
+use App\Jobs\ConvertActvityIntoIndependentActivity;
 use App\Models\IndependentActivity;
 use App\Models\ActivityItem;
 use App\Models\Playlist;
+use App\Models\Activity;
 use App\Repositories\IndependentActivity\IndependentActivityRepositoryInterface;
 use App\Repositories\ActivityItem\ActivityItemRepositoryInterface;
 use App\Repositories\H5pContent\H5pContentRepositoryInterface;
@@ -32,6 +36,10 @@ use App\Models\Organization;
 use App\Jobs\ExportIndependentActivity;
 use App\Jobs\ImportIndependentActivity;
 use App\Http\Requests\V1\IndependentActivityUploadImportRequest;
+use Djoudi\LaravelH5p\Eloquents\H5pContent;
+use RecursiveDirectoryIterator;
+use RecursiveIteratorIterator;
+use ZipArchive;
 
 /**
  * @group 5. Independent Activity
@@ -85,7 +93,7 @@ class IndependentActivityController extends Controller
      */
     public function index(OrganizationIndependentActivityRequest $request, Organization $suborganization)
     {
-        $this->authorize('viewAny', [IndependentActivity::class, $suborganization]);
+        $this->authorize('viewAuthor', [IndependentActivity::class, $suborganization]);
 
         $authenticated_user = auth()->user();
 
@@ -197,7 +205,7 @@ class IndependentActivityController extends Controller
 
         if ($independentActivity) {
             return response([
-                'independent-activity' => new IndependentActivityResource($independentActivity),
+                'independent-activity' => new IndependentActivityResource($independentActivity->refresh()),
             ], 201);
         }
 
@@ -676,7 +684,6 @@ class IndependentActivityController extends Controller
         $data[] = $h5p_data;
         $data[] = $independent_activity;
         Storage::disk('public')->put('/exports/'.$request->id.'/'.$request->id.'-h5p.json', json_encode($data));
-        
         $rootPath = storage_path('app/public/exports/'.$request->id);
         return response([
             'url'=> url('storage/exports/'.$request->id.'/'.$request->id.'-h5p.json'),
@@ -689,7 +696,6 @@ class IndependentActivityController extends Controller
             new RecursiveDirectoryIterator($rootPath),
             RecursiveIteratorIterator::LEAVES_ONLY
         );
-    
         foreach ($files as $name => $file)
         {
             // Skip directories (they would be added automatically)
@@ -698,12 +704,11 @@ class IndependentActivityController extends Controller
                 // Get real and relative path for current file
                 $filePath = $file->getRealPath();
                 $relativePath = substr($filePath, strlen($rootPath) + 1);
-        
                 // Add current file to archive
                 $zip->addFile($filePath, $relativePath);
             }
         }
-        $zip->close();  
+        $zip->close();
         return url('storage/exports/'.$zipFileName);
 
     }
@@ -834,9 +839,9 @@ class IndependentActivityController extends Controller
      * Download XApi File
      *
      * This is an API for to download the XAPI zip for the attempted independent activity
-     * 
+     *
      * @urlParam independent_activity required id, title, slug of an independent_activity
-     * 
+     *
      * @return download file download for the independent activity XAPI zip download
      */
     public function getXAPIFileForIndepActivity(Request $request, IndependentActivity $independent_activity) {
@@ -876,9 +881,9 @@ class IndependentActivityController extends Controller
      * Import Independent Activity
      *
      * Import the specified independent activity of a user.
-     * 
+     *
      * @urlParam suborganization required The Id of a suborganization Example: 1
-     * @param independent_activity 
+     * @param independent_activity
      * @response {
      *   "message": "Your request to import independent activity has been received and is being processed."
      * }
@@ -965,8 +970,78 @@ class IndependentActivityController extends Controller
         CopyIndependentActivityIntoPlaylist::dispatch($suborganization, $independent_activity, $playlist, $request->bearerToken())->delay(now()->addSecond());
 
         return response([
-            "message" => "Your request to add independent activity [$independent_activity->title] into playlist [$playlist->title] has been 
+            "message" => "Your request to add independent activity [$independent_activity->title] into playlist [$playlist->title] has been
             received and is being processed.<br> You will be alerted in the notification section in the title bar when complete.",
+        ], 200);
+    }
+
+    /**
+     * Move Independent Activity into Playlist
+     *
+     * Move the specified independent activity of an suborganization and link with a playlist.
+     *
+     * @urlParam suborganization required The Id of a suborganization Example: 1
+     * @urlParam playlist required The Id of a playlist Example: 1
+     * @bodyParam independentActivityIds array The Ids of independent activities Example: [1, 2]
+     *
+     * @response {
+     *   "message": "Your request to add independent activity into playlist [playlistTitle] has been received and is being processed.<br> You will be alerted in the notification section in the title bar when complete."
+     * }
+     *
+     * @response 422 {
+     *   "message": "The given data was invalid.",
+     *   "errors": {
+     *      "independentActivityIds.0": [
+     *          "Activities that are moving to projects should have share disabled and library preference should be private."
+     *      ]
+     *   }
+     * }
+     *
+     * @param MoveIndependentActivityIntoPlaylistRequest $request
+     * @param Organization $suborganization
+     * @param Playlist $playlist
+     * @return Response
+     */
+    public function moveIndependentActivityIntoPlaylist(MoveIndependentActivityIntoPlaylistRequest $request, Organization $suborganization, Playlist $playlist)
+    {
+        $requestData = $request->validated();
+
+        foreach ($requestData['independentActivityIds'] as $independentActivityId) {
+            $independentActivity = IndependentActivity::find($independentActivityId);
+            MoveIndependentActivityIntoPlaylist::dispatch($suborganization, $independentActivity, $playlist, $request->bearerToken())->delay(now()->addSecond());
+        }
+
+        return response([
+            "message" => "Your request to add independent activity into playlist [$playlist->title] has been
+            received and is being processed.<br> You will be alerted in the notification section in the title bar when complete.",
+        ], 200);
+    }
+
+    /**
+     * Copy Activity into Independent Activity
+     *
+     * Copy the specified activity of an suborganization into an independent activity.
+     *
+     * @urlParam suborganization required The Id of a suborganization Example: 1
+     * @urlParam activity required The Id of a activity Example: 1
+     *
+     * @response {
+     *   "message": "Your request to copy activity [activity->title] into independent activity has been received and is being processed.<br> You will be alerted in the notification section in the title bar when completed."
+     * }
+     *
+     *
+     * @param Request $request
+     * @param Organization $suborganization
+     * @param Activity $activity
+     * @return Response
+     */
+    public function convertActvityIntoIndependentActivity(Request $request, Organization $suborganization, Activity $activity)
+    {
+        ConvertActvityIntoIndependentActivity::dispatch($suborganization, $activity, $request->bearerToken())->delay(now()->addSecond());
+
+        return response([
+            "message" => "Your request to copy activity [$activity->title] into independent activity has been
+            received and is being processed.<br> You will be alerted in the notification section in the title bar when completed.",
         ], 200);
     }
 }

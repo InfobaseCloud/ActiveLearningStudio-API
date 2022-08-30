@@ -167,7 +167,8 @@ class ActivityController extends Controller
         $data = $request->validated();
 
         $data['order'] = $this->activityRepository->getOrder($playlist->id) + 1;
-        
+        $data['shared'] = $playlist->project->shared;
+
         return \DB::transaction(function () use ($data, $playlist) {
 
             $attributes = Arr::except($data, ['subject_id', 'education_level_id', 'author_tag_id', 'tag_id']);
@@ -299,13 +300,13 @@ class ActivityController extends Controller
             $is_updated = $this->activityRepository->update($attributes, $activity->id);
 
             if ($is_updated) {
-                if (isset($validated['subject_id'])) {
+                if (isset($validated['subject_id']) && !empty($validated['subject_id'])) {
                     $activity->subjects()->sync($validated['subject_id']);
                 }
-                if (isset($validated['education_level_id'])) {
+                if (isset($validated['education_level_id']) && !empty($validated['education_level_id'])) {
                     $activity->educationLevels()->sync($validated['education_level_id']);
                 }
-                if (isset($validated['author_tag_id'])) {
+                if (isset($validated['author_tag_id']) && !empty($validated['author_tag_id'])) {
                     $activity->authorTags()->sync($validated['author_tag_id']);
                 }
                 if (isset($validated['tag_id'])) {

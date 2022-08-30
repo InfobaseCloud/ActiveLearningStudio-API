@@ -19,6 +19,8 @@ Route::post('admin/login', 'Auth\AuthController@adminLogin')->name('admin.login'
 Route::post('login/google', 'Auth\AuthController@loginWithGoogle');
 Route::post('login/sso', 'Auth\AuthController@ltiSsoLogin1p0');
 Route::post('login/lti-sso', 'Auth\AuthController@ltiSsoLogin');
+Route::post('login/wordpress-sso', 'Auth\AuthController@wordpressSSO');
+Route::get('login/wordpress-sso-settings/{clientId}', 'Auth\AuthController@getWordpressSSODefaultSettings');
 Route::get('oauth/{provider}/redirect', 'Auth\AuthController@oauthRedirect');
 Route::get('oauth/{provider}/callback', 'Auth\AuthController@oauthCallBack');
 Route::post('forgot-password', 'Auth\ForgotPasswordController@sendResetLinkEmail');
@@ -106,7 +108,8 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('suborganization/{suborganization}/independent-activities/{independent_activity}/export', 'IndependentActivityController@exportIndependentActivity');
         Route::post('suborganization/{suborganization}/independent-activities/import', 'IndependentActivityController@importIndependentActivity');
         Route::post('suborganization/{suborganization}/independent-activities/{independent_activity}/playlist/{playlist}/copy-to-playlist', 'IndependentActivityController@copyIndependentActivityIntoPlaylist');
-        
+        Route::post('suborganization/{suborganization}/independent-activities/playlist/{playlist}/move-to-playlist', 'IndependentActivityController@moveIndependentActivityIntoPlaylist');
+        Route::post('suborganization/{suborganization}/independent-activities/activity/{activity}/copy-to-independent-activity', 'IndependentActivityController@convertActvityIntoIndependentActivity');
         Route::get('independent-activities/{id}/h5p-activity', 'IndependentActivityController@h5pActivity');
         //Projects
         Route::get('suborganization/{suborganization}/projects/{project}/search-preview', 'ProjectController@searchPreview');
@@ -125,7 +128,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('suborganization/{suborganization}/teams/{team}/projects/{project}/export-projects-to-noovo', 'TeamController@exportProjecttoNoovo');
         Route::post('suborganization/{suborganization}/projects/{project}/export-noovo', 'ProjectController@exportNoovoProject');
         Route::post('suborganization/{suborganization}/projects/import', 'ProjectController@importProject');
-        Route::post('suborganization/{suborganization}/projects/import', 'ProjectController@importProject');
         Route::get('suborganization/{suborganization}/projects/teachers', 'ProjectController@getTeacherProject');
         Route::get('suborganization/{suborganization}/projects/teachers/{projectId}', 'ProjectController@getOneTeacherProject');
         Route::get('suborganization/{suborganization}/projects/students', 'ProjectController@getStudentProject');
@@ -134,7 +136,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('suborganization/{suborganization}/projects/{project}/remove-share', 'ProjectController@removeShare');
         Route::post('suborganization/{suborganization}/projects/{project}/favorite', 'ProjectController@favorite');
         Route::get('suborganization/{suborganization}/team-projects', 'ProjectController@getTeamProjects');
-        Route::apiResource('suborganization.projects', 'ProjectController');
+        Route::apiResource('suborganization/{suborganization}/projects', 'ProjectController');
 
         Route::post('projects/{project}/playlists/reorder', 'PlaylistController@reorder');
         Route::post('projects/{project}/playlists/{playlist}/clone', 'PlaylistController@clone');
@@ -189,6 +191,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::group(['prefix' => 'h5p'], function () {
             // H5P Ajax calls
             Route::match(['GET', 'POST'], 'ajax/libraries', '\Djoudi\LaravelH5p\Http\Controllers\AjaxController@libraries')->name('h5p.ajax.libraries');
+            Route::match(['POST'], 'ajax/libraries/load-all-dependencies', '\Djoudi\LaravelH5p\Http\Controllers\AjaxController@loadAllDependencies')->name('h5p.ajax.libraries.load.all.dependencies');
             Route::get('ajax/single-libraries', '\Djoudi\LaravelH5p\Http\Controllers\AjaxController@singleLibrary')->name('h5p.ajax.single-libraries');
             Route::any('ajax/content-type-cache', '\Djoudi\LaravelH5p\Http\Controllers\AjaxController@contentTypeCache')->name('h5p.ajax.content-type-cache');
             Route::any('ajax/library-install', '\Djoudi\LaravelH5p\Http\Controllers\AjaxController@libraryInstall')->name('h5p.ajax.library-install');
@@ -251,7 +254,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('users/report/basic', 'UserController@reportBasic')->name('users.report.basic');
         // lti-tool-settings
         Route::apiResource('suborganizations/{suborganization}/lti-tool-settings', 'LtiTool\LtiToolSettingsController');
-        Route::post('suborganizations/{suborganization}/lti-tool-settings/{ltiToolSetting}/clone', 'LtiTool\LtiToolSettingsController@clone');
         Route::get('suborganizations/{suborganization}/lti-tool-type', 'LtiTool\LtiToolSettingsController@getLTIToolTypeList');
 
         // brightcove-api-settings
@@ -355,6 +357,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
     Route::get('go/lms/organizations', 'CurrikiGo\LmsController@organizations');
     Route::get('go/lms/teams', 'CurrikiGo\LmsController@teams');
     Route::post('go/passLtiCourseDetails', 'CurrikiGo\LmsServicesController@saveLtiTeachersData');
+    Route::get('go/lms/independent-activities', 'CurrikiGo\LmsController@independentActivities');
     // LTI Playlist
     Route::get('playlists/{playlist}/lti', 'PlaylistController@loadLti');
     // xAPI Statments
