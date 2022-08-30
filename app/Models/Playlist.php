@@ -24,7 +24,6 @@ class Playlist extends Model
         'project_id',
         'shared',
         'order',
-        'is_column_summary'
     ];
 
     /**

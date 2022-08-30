@@ -36,11 +36,7 @@ class UserRepository extends BaseRepository implements UserRepositoryInterface
     public function create(array $data)
     {
         try {
-            $roles = new OrganizationRoleType();
             $data['deleted_at'] = null;
-            $roleName = $roles->getRoleNameById($data['role_id'])->first();
-            $data['role'] = $roleName;
-            return $this->model->withTrashed()->updateOrCreate(['email' => $data['email']], Arr::except($data, ['role_id']));
         } catch (\Exception $e) {
             Log::error($e->getMessage());
         }

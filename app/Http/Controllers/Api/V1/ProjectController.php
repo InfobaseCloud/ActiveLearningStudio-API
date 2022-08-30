@@ -311,18 +311,7 @@ class ProjectController extends Controller
         $role = ['role' => 'owner'];
 
         $project = $this->projectRepository->createProject($authenticatedUser, $suborganization, $data, $role);
-        if ($project) {
-            if($data && $data["project_for"]){
-                $teacher_exists = in_array("teacher", $data["project_for"]);
-                $student_exists = in_array("student", $data["project_for"]);
-                if($teacher_exists){
-                    $authenticatedUser->teacherProjects()->attach($project->id, ['organization_id' => $suborganization->id]);
-                }
-                if($student_exists){
-                    $authenticatedUser->studentProjects()->attach($project->id, ['organization_id' => $suborganization->id]);
-                }
-            }
-        }
+
         if ($project) {
             return response([
                 'project' => new ProjectResource($project),
@@ -499,9 +488,7 @@ class ProjectController extends Controller
     {
         $this->authorize('update', [Project::class, $project]);
         $data = $projectUpdateRequest->validated();
-        $projectFor = $projectUpdateRequest->project_for;
-        $authenticatedUser = auth()->user();
-        return \DB::transaction(function () use ($project, $data, $projectFor, $authenticatedUser) {
+        return \DB::transaction(function () use ($project, $data) {
 
             if (isset($data['user_id'])) {
                 $project->users()->sync([$data['user_id'] => ['role' => 'owner']]);
@@ -512,59 +499,6 @@ class ProjectController extends Controller
             if ($is_updated) {
                 $updated_project = new ProjectResource($this->projectRepository->find($project->id));
                 event(new ProjectUpdatedEvent($updated_project));
-                if($projectFor){
-                    $teacher_exists = in_array("teacher", $projectFor);
-                    $student_exists = in_array("student", $projectFor);
-                    if($teacher_exists){
-                        if ($authenticatedUser->teacherProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->teacherProjects()->wherePivot('organization_id', $updated_project->organization_id)->detach($updated_project->id);
-                        }
-                        $authenticatedUser->teacherProjects()->attach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                    }
-                    else{
-                        if ($authenticatedUser->teacherProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->teacherProjects()->wherePivot('organization_id', $updated_project->organization_id)->detach($updated_project->id);
-                        }
-                    }
-                    if($student_exists){
-                        if ($authenticatedUser->studentProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->studentProjects()->detach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                        }
-                        $authenticatedUser->studentProjects()->attach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                    }
-                    else{
-                        if ($authenticatedUser->studentProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->studentProjects()->detach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                        }
-                    }
-                }
-
-                if($projectFor){
-                    $teacher_exists = in_array("teacher", $projectFor);
-                    $student_exists = in_array("student", $projectFor);
-                    if($teacher_exists){
-                        if ($authenticatedUser->teacherProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->teacherProjects()->wherePivot('organization_id', $updated_project->organization_id)->detach($updated_project->id);
-                        }
-                        $authenticatedUser->teacherProjects()->attach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                    }
-                    else{
-                        if ($authenticatedUser->teacherProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->teacherProjects()->wherePivot('organization_id', $updated_project->organization_id)->detach($updated_project->id);
-                        }
-                    }
-                    if($student_exists){
-                        if ($authenticatedUser->studentProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->studentProjects()->detach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                        }
-                        $authenticatedUser->studentProjects()->attach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                    }
-                    else{
-                        if ($authenticatedUser->studentProjects()->where('id', $updated_project->id)->wherePivot('organization_id', $updated_project->organization_id)->first()) {
-                            $authenticatedUser->studentProjects()->detach($updated_project->id, ['organization_id' => $updated_project->organization_id]);
-                        }
-                    }
-                }
 
                 return response([
                     'project' => $updated_project,
@@ -943,66 +877,5 @@ class ProjectController extends Controller
         return response()->json([
             "projects" => $projects
         ]);
-    }
-
-    public function getTeacherProject(Organization $suborganization)
-    {
-        $this->authorize('favorite', [Project::class, $suborganization]);
-
-        $authenticated_user = auth()->user();
-
-        $teachersProjects = $authenticated_user->teacherProjects()
-                            ->wherePivot('organization_id', $suborganization->id)
-                            ->get();
-
-        return response([
-            'projects' => ProjectResource::collection($teachersProjects),
-        ], 200);
-    }
-    public function getOneTeacherProject(Organization $suborganization, Project $project, Request $request)
-    {
-        $this->authorize('favorite', [Project::class, $suborganization, $project]);
-        $authenticated_user = auth()->user();
-
-        $teachersProjects = $authenticated_user->teacherProjects()
-                            ->wherePivot('project_id', $request ->projectId)
-                            ->wherePivot('organization_id', $suborganization->id)
-                            ->get();
-
-        // dd($teachersProjects);
-        return response([
-            'projects' => ProjectResource::collection($teachersProjects),
-        ], 200);
-    }
-
-    public function getStudentProject(Organization $suborganization)
-    {
-        $this->authorize('favorite', [Project::class, $suborganization]);
-
-        $authenticated_user = auth()->user();
-
-        $favoriteProjects = $authenticated_user->studentProjects()
-                            ->wherePivot('organization_id', $suborganization->id)
-                            ->get();
-
-        return response([
-            'projects' => ProjectResource::collection($favoriteProjects),
-        ], 200);
-    }
-
-    public function getOneStudentProject(Organization $suborganization, Project $project, Request $request)
-    {
-        $this->authorize('favorite', [Project::class, $suborganization]);
-
-        $authenticated_user = auth()->user();
-
-        $favoriteProjects = $authenticated_user->studentProjects()
-                            ->wherePivot('project_id', $request ->projectId)
-                            ->wherePivot('organization_id', $suborganization->id)
-                            ->get();
-
-        return response([
-            'projects' => ProjectResource::collection($favoriteProjects),
-        ], 200);
     }
 }

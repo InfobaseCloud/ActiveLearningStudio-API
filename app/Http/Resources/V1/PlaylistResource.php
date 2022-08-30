@@ -28,7 +28,6 @@ class PlaylistResource extends JsonResource
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'gcr_playlist_visibility' => $this->project->organization->gcr_playlist_visibility,
-            'is_column_summary' => $this->is_column_summary,
         ];
     }
 }

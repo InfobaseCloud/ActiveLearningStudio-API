@@ -128,10 +128,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::post('suborganization/{suborganization}/teams/{team}/projects/{project}/export-projects-to-noovo', 'TeamController@exportProjecttoNoovo');
         Route::post('suborganization/{suborganization}/projects/{project}/export-noovo', 'ProjectController@exportNoovoProject');
         Route::post('suborganization/{suborganization}/projects/import', 'ProjectController@importProject');
-        Route::get('suborganization/{suborganization}/projects/teachers', 'ProjectController@getTeacherProject');
-        Route::get('suborganization/{suborganization}/projects/teachers/{projectId}', 'ProjectController@getOneTeacherProject');
-        Route::get('suborganization/{suborganization}/projects/students', 'ProjectController@getStudentProject');
-        Route::get('suborganization/{suborganization}/projects/students/{projectId}', 'ProjectController@getOneStudentProject');
 
         Route::post('suborganization/{suborganization}/projects/{project}/remove-share', 'ProjectController@removeShare');
         Route::post('suborganization/{suborganization}/projects/{project}/favorite', 'ProjectController@favorite');
@@ -162,9 +158,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('activities/{activity}/h5p-resource-settings', 'ActivityController@getH5pResourceSettings');
         Route::get('activities/{activity}/h5p-resource-settings-open', 'ActivityController@getH5pResourceSettingsOpen');
         Route::apiResource('playlists.activities', 'ActivityController');
-
-        Route::apiResource('h5p-record', 'H5pRecordsController');
-        Route::get('playlists/{playlistId}/h5p-record', 'H5pRecordsController@getRecordByPlaylistId');
 
         Route::apiResource('suborganizations/{suborganization}/activity-layouts', 'ActivityLayoutController');
         Route::post('get-whiteboard', 'WhiteboardController@getWhiteboard');
@@ -226,7 +219,6 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
         Route::get('suborganizations/{suborganization}/users', 'SuborganizationController@getUsers')->name('suborganizations.get-users');
         Route::post('suborganizations/{suborganization}/add-user', 'SuborganizationController@addUser')->name('suborganizations.add-user');
         Route::post('suborganizations/{suborganization}/add-new-user', 'UserController@addNewUser')->name('suborganizations.add-new-user');
-        Route::post('suborganizations/{suborganization}/users/bulk/import', 'Admin\UserController@bulkImport')->name('users.bulk.import');
         Route::post('suborganizations/{suborganization}/invite-members', 'SuborganizationController@inviteMembers')->name('suborganizations.invite-members');
         Route::put('suborganizations/{suborganization}/update-user', 'SuborganizationController@updateUser')->name('suborganizations.update-user');
         Route::put('suborganizations/{suborganization}/update-user-detail', 'UserController@updateUserDetail')->name('suborganizations.update-user-detail');
@@ -387,6 +379,7 @@ Route::group(['prefix' => 'v1', 'namespace' => 'Api\V1'], function () {
     ], function () {
         // users
         Route::get('users/report/basic', 'UserController@reportBasic')->name('users.report.basic');
+        Route::post('users/bulk/import', 'UserController@bulkImport')->name('users.bulk.import');
         Route::get('users/assign/starter-projects', 'UserController@assignStarterProjects')->name('users.assign.starter-projects');
         Route::get('users/{user}/roles/{role}', 'UserController@updateRole')->name('users.update.role');
         Route::apiResource('users', 'UserController');

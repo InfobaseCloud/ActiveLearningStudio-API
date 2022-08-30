@@ -35,8 +35,4 @@ class OrganizationRoleType extends Model
         return $this->belongsToMany('App\User', 'organization_user_roles')->using('App\Models\OrganizationUserRole')->withPivot('organization_role_type_id')->withTimestamps();
     }
 
-    public function getRoleNameById($id)
-    {
-        return $this->where('id', $id)->pluck('name');
-    }
 }

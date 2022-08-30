@@ -273,7 +273,6 @@ class ProjectRepository extends BaseRepository implements ProjectRepositoryInter
         $proj["indexing_text"] = $project['indexing_text'];
         $proj["created_at"] = $project['created_at'];
         $proj["updated_at"] = $project['updated_at'];
-        $proj["project_type"] = $project['project_type'];
         
         $proj["playlists"] = [];
         foreach ($project['playlists'] as $playlist) {
@@ -297,7 +296,6 @@ class ProjectRepository extends BaseRepository implements ProjectRepositoryInter
                 $plistActivity['title'] = $activity->title;
                 $plistActivity['library_name'] = $h5pContent ? $h5pContent->library_name : null;
                 $plistActivity['thumb_url'] = $activity->thumb_url;
-                $plistActivity['duration'] = $activity->duration;
                 $plistActivity['author_tags'] = $activity->authorTags;
                 $plist['activities'][] = $plistActivity;
             }

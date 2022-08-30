@@ -26,7 +26,6 @@ class PlaylistRequest extends FormRequest
         return [
             'title' => 'required|string|max:255',
             'order' => 'integer|max:2147483647',
-            'is_column_summary' => 'boolean'
         ];
     }
 }

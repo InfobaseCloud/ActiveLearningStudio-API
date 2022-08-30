@@ -2,29 +2,25 @@
 
 namespace App\Imports;
 
-use App\User;
-use Maatwebsite\Excel\Row;
-use Illuminate\Support\Str;
-use App\Rules\StrongPassword;
-use Illuminate\Validation\Rule;
 use App\Models\OrganizationType;
-use App\Models\OrganizationRoleType;
-use Illuminate\Support\Facades\Hash;
+use App\Rules\StrongPassword;
+use App\User;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Request;
-use Maatwebsite\Excel\Concerns\ToModel;
-use Maatwebsite\Excel\Concerns\OnEachRow;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 use Maatwebsite\Excel\Concerns\Importable;
 use Maatwebsite\Excel\Concerns\SkipsErrors;
 use Maatwebsite\Excel\Concerns\SkipsOnError;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithBatchInserts;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithValidation;
 
-class UsersImport implements WithBatchInserts, WithChunkReading, WithValidation, WithHeadingRow, SkipsOnFailure, SkipsOnError, OnEachRow
+class UsersImport implements ToModel, WithBatchInserts, WithChunkReading, WithValidation, WithHeadingRow, SkipsOnFailure, SkipsOnError
 {
     use Importable, SkipsFailures, SkipsErrors;
 
@@ -49,7 +45,6 @@ class UsersImport implements WithBatchInserts, WithChunkReading, WithValidation,
     {
         $this->timestamp = now();
         $this->organizationTypes = OrganizationType::pluck('label');
-        $this->organizationRoleType = OrganizationRoleType::pluck('display_name');
     }
 
     // /**
@@ -75,32 +70,26 @@ class UsersImport implements WithBatchInserts, WithChunkReading, WithValidation,
 
     public function onRow(Row $row)
     {
-        $orgId = Request::segment(4);
+        // $orgId = Request::segment(4);
         $this->importedCount++; // increment the inserted rows count
-        $rowIndex = $row->getIndex();
-        $row      = $row->toArray();
-        $orgRole = ['display_name' => $row['role'], 'organization_id' => $orgId];
-        $this->roleType = OrganizationRoleType::where($orgRole)->first();
-        $this->roleTypeId = $this->roleType != null ? $this->roleType->id : 0;
+        // $rowIndex = $row->getIndex();
+        // $row      = $row->toArray();
+        // $orgRole = ['display_name' => $row['role'], 'organization_id' => $orgId];
+        // $roleTypeId = OrganizationRoleType::where($orgRole)->first()->id;
 
-        if ($this->roleTypeId != 0) {
-            $user = User::firstOrCreate([
-                'first_name' => $row['first_name'],
-                'last_name' => $row['last_name'],
-                'organization_name' => $row['organization_name'] ?? null,
-                'organization_type' => $row['organization_type'] ?? null,
-                'job_title' => $row['job_title'] ?? null,
-                'email' => $row['email'],
-                'password' => Hash::make($row['password']),
-                'remember_token' => Str::random(64),
-                'email_verified_at' => $this->timestamp
-            ]);
-
-            $user->publisherOrg()->create([
-                'organization_id' => $orgId,
-                'organization_role_type_id' => $this->roleTypeId
-            ]);
-        }
+        // $user = User::firstOrCreate([
+        return new User([
+            'first_name' => $row['first_name'],
+            'last_name' => $row['last_name'],
+            'organization_name' => $row['organization_name'] ?? null,
+            'organization_type' => $row['organization_type'] ?? null,
+            'job_title' => $row['job_title'] ?? null,
+            'email' => $row['email'],
+            'role' => $row['role'] ?? 'Course Creator',
+            'password' => Hash::make($row['password']),
+            'remember_token' => Str::random(64),
+            'email_verified_at' => $this->timestamp
+        ]);
     }
 
     /**
@@ -129,7 +118,6 @@ class UsersImport implements WithBatchInserts, WithChunkReading, WithValidation,
             '*.last_name' => 'required|string|max:255',
             '*.organization_name' => 'required|string|max:50',
             '*.organization_type' => ['required', 'string', 'max:255', Rule::in($this->organizationTypes),],
-            '*.role' => ['required', 'string', 'max:255', Rule::in($this->organizationRoleType),],
             '*.job_title' => 'string|max:255',
             '*.email' => 'required|email|max:255|unique:users,email',
             '*.password' => ['required', 'string', new StrongPassword],
